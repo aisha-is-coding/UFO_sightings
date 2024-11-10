@@ -1,0 +1,68 @@
+<!-- ufo_project/ufo_sightings/templates/ufo_sightings/map.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UFO Sightings Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css"
+    />
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>UFO Sightings Map</h1>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script
+        src="https://unpkg.com/leaflet/dist/leaflet.js"
+    ></script>
+    <script>
+        var map = L.map('map').setView([20, 0], 2);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var sightings = [
+            {% for sighting in sightings %}
+                {
+                    'lat': {{ sighting.location.y }},
+                    'lng': {{ sighting.location.x }},
+                    'datetime': '{{ sighting.datetime|date:"Y-m-d H:i" }}',
+                    'description': '{{ sighting.description|escapejs }}',
+                    'city': '{{ sighting.city|escapejs }}',
+                    'state_province': '{{ sighting.state_province|escapejs }}',
+                    'country': '{{ sighting.country|upper }}',
+                    'shape': '{{ sighting.ufo_shape|default:"Unknown"|escapejs }}',
+                },
+            {% endfor %}
+        ];
+
+        sightings.forEach(function(sighting) {
+            var popupContent = '<strong>Date/Time:</strong> ' + sighting.datetime + '<br>' +
+                '<strong>Location:</strong> ' + sighting.city;
+
+            if (sighting.state_province) {
+                popupContent += ', ' + sighting.state_province;
+            }
+
+            popupContent += ', ' + sighting.country + '<br>' +
+                '<strong>Shape:</strong> ' + sighting.shape + '<br>' +
+                '<strong>Description:</strong> ' + sighting.description;
+
+            L.marker([sighting.lat, sighting.lng]).addTo(map)
+                .bindPopup(popupContent);
+        });
+    </script>
+</body>
+</html>

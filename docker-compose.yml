@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgis/postgis
+    environment:
+      POSTGRES_USER: ufo_user          
+      POSTGRES_PASSWORD: ufo_pass      
+      POSTGRES_DB: ufo_db              
+    ports:
+      - "25432:5432"                    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  
+
+  web:
+    build: ./ufo_project
+    command: ["./wait-for-it.sh", "db:5432", "--", "uwsgi", "--ini", "/app/uwsgi.ini"]
+    environment:
+      GDAL_LIBRARY_PATH: /usr/lib/libgdal.so  # Set GDAL path
+    volumes:
+      - ./ufo_project:/app                    # Mount the Django project directory
+    ports:
+      - "8000:8000"                            # Mapped port for Django app
+    depends_on:
+      - db
+  
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - static_volume:/app/staticfiles
+    depends_on:
+      - web
+      - pgadmin
+
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: aishaadebimpe@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: 1234
+    volumes:
+      - ./pgadmin:/var/lib/pgadmin
+    depends_on:
+      - db
+
+
+volumes:
+  postgres_data:    
+  pgadmin_data: 
+  static_volume:    
